@@ -5,55 +5,27 @@ import { getEvenlySpacedPositions } from "./globe-layout.js";
 import "./App.css";
 
 const MAX_REPOSITORIES = 6;
-const MAX_FEATURED_POSTS = 6;
-const FEATURED_REPOSITORIES = [
-  {
-    id: 1307288009,
-    full_name: "SamD20/Arsenic-Risk-w-3D-CNN-PointNet",
-    name: "Arsenic-Risk-w-3D-CNN-PointNet",
-    html_url: "https://github.com/SamD20/Arsenic-Risk-w-3D-CNN-PointNet",
-    language: "Python",
-    fork: false,
-    stargazers_count: 0,
-    forks_count: 0,
-    watchers_count: 0,
-  },
-  {
-    id: 1400701946,
-    full_name: "SamD20/Data-Manipulation-3D-ML",
-    name: "Data-Manipulation-3D-ML",
-    html_url: "https://github.com/SamD20/Data-Manipulation-3D-ML",
-    language: "C++",
-    fork: false,
-    stargazers_count: 0,
-    forks_count: 0,
-    watchers_count: 0,
-  },
-  {
-    id: 1400932729,
-    full_name: "SamD20/Portfolio-Website",
-    name: "Portfolio-Website",
-    html_url: "https://github.com/SamD20/Portfolio-Website",
-    language: "JavaScript",
-    fork: false,
-    stargazers_count: 0,
-    forks_count: 0,
-    watchers_count: 0,
-  },
-];
-const FEATURED_REPOSITORY_NAMES = new Set(
-  FEATURED_REPOSITORIES.map((repository) => repository.full_name),
-);
-
-function toRepositoryItem(repository) {
-  return {
-    id: `github-${repository.id}`,
-    type: "github",
-    title: repository.name,
-    url: repository.html_url,
-    language: repository.language,
-  };
-}
+const MAX_FEATURED_POSTS = 3;
+const FEATURED_REPOSITORY = {
+  id: 1400932729,
+  full_name: "SamD20/Portfolio-Website",
+  name: "Portfolio-Website",
+  html_url: "https://github.com/SamD20/Portfolio-Website",
+  language: "JavaScript",
+  fork: false,
+  stargazers_count: 0,
+  forks_count: 0,
+  watchers_count: 0,
+};
+const FEATURED_REPOSITORY_ITEM = {
+  lat: 0,
+  lon: -90,
+  id: `github-${FEATURED_REPOSITORY.id}`,
+  type: "github",
+  title: FEATURED_REPOSITORY.name,
+  url: FEATURED_REPOSITORY.html_url,
+  language: FEATURED_REPOSITORY.language,
+};
 
 const GITHUB_LOGO_PATH =
   "M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.1.78-.25.78-.55v-2.13c-3.2.7-3.88-1.35-3.88-1.35-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.77.11 3.06.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.4-5.26 5.69.41.36.78 1.06.78 2.14v3.18c0 .3.21.66.79.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z";
@@ -100,40 +72,28 @@ async function fetchRepositories(signal) {
   }
 
   const repositories = await response.json();
-  const repositoriesByName = new Map(
-    FEATURED_REPOSITORIES.map((repository) => [
-      repository.full_name,
-      repository,
-    ]),
+  const featuredRepositoryIsIncluded = repositories.some(
+    (repository) => repository.full_name === FEATURED_REPOSITORY.full_name,
   );
-  repositories.forEach((repository) => {
-    repositoriesByName.set(repository.full_name, repository);
-  });
 
-  return [...repositoriesByName.values()]
+  if (!featuredRepositoryIsIncluded) {
+    repositories.push(FEATURED_REPOSITORY);
+  }
+
+  return repositories
     .filter(
       (repository) =>
         !repository.fork ||
-        FEATURED_REPOSITORY_NAMES.has(repository.full_name),
+        repository.full_name === FEATURED_REPOSITORY.full_name,
     )
     .sort((first, second) => {
-      const firstFeaturedIndex = FEATURED_REPOSITORIES.findIndex(
-        (repository) => repository.full_name === first.full_name,
-      );
-      const secondFeaturedIndex = FEATURED_REPOSITORIES.findIndex(
-        (repository) => repository.full_name === second.full_name,
-      );
+      const firstIsFeatured =
+        first.full_name === FEATURED_REPOSITORY.full_name;
+      const secondIsFeatured =
+        second.full_name === FEATURED_REPOSITORY.full_name;
 
-      if (firstFeaturedIndex !== secondFeaturedIndex) {
-        if (firstFeaturedIndex === -1) {
-          return 1;
-        }
-
-        if (secondFeaturedIndex === -1) {
-          return -1;
-        }
-
-        return firstFeaturedIndex - secondFeaturedIndex;
+      if (firstIsFeatured !== secondIsFeatured) {
+        return firstIsFeatured ? -1 : 1;
       }
 
       const firstScore =
@@ -148,7 +108,17 @@ async function fetchRepositories(signal) {
       return secondScore - firstScore;
     })
     .slice(0, MAX_REPOSITORIES)
-    .map(toRepositoryItem);
+    .map((repository) => {
+      const id = `github-${repository.id}`;
+
+      return {
+        id,
+        type: "github",
+        title: repository.name,
+        url: repository.html_url,
+        language: repository.language,
+      };
+    });
 }
 
 async function fetchLinkedInPosts(signal) {
@@ -357,7 +327,7 @@ function Globe({ items, filter, paused, reducedMotion, onHoverChange }) {
         enablePan={false}
         enableZoom
         autoRotate={!reducedMotion && !paused}
-        autoRotateSpeed={0.16}
+        autoRotateSpeed={2}
         minDistance={3}
         maxDistance={6}
       />
@@ -366,9 +336,7 @@ function Globe({ items, filter, paused, reducedMotion, onHoverChange }) {
 }
 
 function App() {
-  const [repositories, setRepositories] = useState(() =>
-    FEATURED_REPOSITORIES.map(toRepositoryItem),
-  );
+  const [repositories, setRepositories] = useState([]);
   const [posts, setPosts] = useState([]);
   const [linkedinConfigured, setLinkedinConfigured] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -398,6 +366,7 @@ function App() {
             "Unable to load GitHub repositories:",
             githubResult.reason,
           );
+          setRepositories([FEATURED_REPOSITORY_ITEM]);
           setErrors((current) => [
             ...current,
             "GitHub repositories unavailable",
