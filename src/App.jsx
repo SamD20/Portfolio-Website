@@ -347,7 +347,7 @@ function App() {
           <em>experience.</em>
         </h1>
         <p className="intro">
-          My name is Sam Derricott. Explore my current GitHub projects and
+          Hello, I'm Sam Derricott. Explore my current GitHub projects and
           featured LinkedIn posts using this interactive globe.
         </p>
 
