@@ -31,6 +31,7 @@ test("feed includes the three newest and most liked posts", () => {
     [samplePosts[1].id, samplePosts[3].id, samplePosts[0].id],
   );
   assert.equal(feed.updatedAt, "2026-10-04T00:00:00.000Z");
+  assert.equal(feed.recent[0].text, "Post 4");
 });
 
 test("feed handles an empty LinkedIn account", () => {

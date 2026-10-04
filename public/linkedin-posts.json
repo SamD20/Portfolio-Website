@@ -1,7 +1,10 @@
 {
-  "updatedAt": null,
+  "updatedAt": "2026-10-04T18:37:00.000Z",
   "recent": [
-    url: "https://www.linkedin.com/feed/update/urn:li:activity:7511697062967664640/"
+    {
+      "url": "https://www.linkedin.com/feed/update/urn:li:activity:7511697062967664640/",
+      "text": "Proud to share that I’ve earned the Software Engineer Certificate from HackerRank! This certificate tested my skills in problem solving, Python, SQL, algorithms, data structures, and software engineering fundamentals. It was a good opportunity to apply my technical knowledge and continue developing my ability to solve programming problems efficiently. I’m looking forward to building on these skills and applying them to real-world software engineering projects. 😀 #SoftwareEngineering #HackerRank #Python #SQL #Programming #Coding #SoftwareDeveloper"
+    }
   ],
   "popular": []
 }

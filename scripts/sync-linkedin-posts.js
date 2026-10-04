@@ -108,6 +108,7 @@ export function buildFeed(
   const formattedPosts = posts.map((post) => ({
     id: post.id,
     title: getPostTitle(post),
+    text: typeof post.commentary === "string" ? post.commentary.trim() : "",
     url: `https://www.linkedin.com/feed/update/${post.id}/`,
     createdAt: Number(post.createdAt || post.lastModifiedAt || 0),
     likes: likesByPostId.get(post.id) || 0,

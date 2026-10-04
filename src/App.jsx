@@ -1,21 +1,59 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Html, OrbitControls } from "@react-three/drei";
+import { getEvenlySpacedPositions } from "./globe-layout.js";
 import "./App.css";
 
 const MAX_REPOSITORIES = 6;
-const MAX_FEATURED_POSTS = 3;
-const FEATURED_REPOSITORY = {
-  id: 1400932729,
-  full_name: "SamD20/Portfolio-Website",
-  name: "Portfolio-Website",
-  html_url: "https://github.com/SamD20/Portfolio-Website",
-  language: "JavaScript",
-  fork: false,
-  stargazers_count: 0,
-  forks_count: 0,
-  watchers_count: 0,
-};
+const MAX_FEATURED_POSTS = 6;
+const FEATURED_REPOSITORIES = [
+  {
+    id: 1307288009,
+    full_name: "SamD20/Arsenic-Risk-w-3D-CNN-PointNet",
+    name: "Arsenic-Risk-w-3D-CNN-PointNet",
+    html_url: "https://github.com/SamD20/Arsenic-Risk-w-3D-CNN-PointNet",
+    language: "Python",
+    fork: false,
+    stargazers_count: 0,
+    forks_count: 0,
+    watchers_count: 0,
+  },
+  {
+    id: 1400701946,
+    full_name: "SamD20/Data-Manipulation-3D-ML",
+    name: "Data-Manipulation-3D-ML",
+    html_url: "https://github.com/SamD20/Data-Manipulation-3D-ML",
+    language: "C++",
+    fork: false,
+    stargazers_count: 0,
+    forks_count: 0,
+    watchers_count: 0,
+  },
+  {
+    id: 1400932729,
+    full_name: "SamD20/Portfolio-Website",
+    name: "Portfolio-Website",
+    html_url: "https://github.com/SamD20/Portfolio-Website",
+    language: "JavaScript",
+    fork: false,
+    stargazers_count: 0,
+    forks_count: 0,
+    watchers_count: 0,
+  },
+];
+const FEATURED_REPOSITORY_NAMES = new Set(
+  FEATURED_REPOSITORIES.map((repository) => repository.full_name),
+);
+
+function toRepositoryItem(repository) {
+  return {
+    id: `github-${repository.id}`,
+    type: "github",
+    title: repository.name,
+    url: repository.html_url,
+    language: repository.language,
+  };
+}
 
 const GITHUB_LOGO_PATH =
   "M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.1.78-.25.78-.55v-2.13c-3.2.7-3.88-1.35-3.88-1.35-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.77.11 3.06.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.4-5.26 5.69.41.36.78 1.06.78 2.14v3.18c0 .3.21.66.79.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z";
@@ -51,19 +89,6 @@ function latLonToVector3(latitude, longitude, radius = 1) {
   ];
 }
 
-function getStableGlobePosition(id) {
-  const hash = [...id].reduce(
-    (value, character) =>
-      (value * 31 + character.charCodeAt(0)) >>> 0,
-    7,
-  );
-
-  return {
-    lat: (hash % 130) - 65,
-    lon: ((hash * 17) % 360) - 180,
-  };
-}
-
 async function fetchRepositories(signal) {
   const response = await fetch(
     "https://api.github.com/users/SamD20/repos?per_page=100&sort=updated",
@@ -75,28 +100,40 @@ async function fetchRepositories(signal) {
   }
 
   const repositories = await response.json();
-  const featuredRepositoryIsIncluded = repositories.some(
-    (repository) => repository.full_name === FEATURED_REPOSITORY.full_name,
+  const repositoriesByName = new Map(
+    FEATURED_REPOSITORIES.map((repository) => [
+      repository.full_name,
+      repository,
+    ]),
   );
+  repositories.forEach((repository) => {
+    repositoriesByName.set(repository.full_name, repository);
+  });
 
-  if (!featuredRepositoryIsIncluded) {
-    repositories.push(FEATURED_REPOSITORY);
-  }
-
-  return repositories
+  return [...repositoriesByName.values()]
     .filter(
       (repository) =>
         !repository.fork ||
-        repository.full_name === FEATURED_REPOSITORY.full_name,
+        FEATURED_REPOSITORY_NAMES.has(repository.full_name),
     )
     .sort((first, second) => {
-      const firstIsFeatured =
-        first.full_name === FEATURED_REPOSITORY.full_name;
-      const secondIsFeatured =
-        second.full_name === FEATURED_REPOSITORY.full_name;
+      const firstFeaturedIndex = FEATURED_REPOSITORIES.findIndex(
+        (repository) => repository.full_name === first.full_name,
+      );
+      const secondFeaturedIndex = FEATURED_REPOSITORIES.findIndex(
+        (repository) => repository.full_name === second.full_name,
+      );
 
-      if (firstIsFeatured !== secondIsFeatured) {
-        return firstIsFeatured ? -1 : 1;
+      if (firstFeaturedIndex !== secondFeaturedIndex) {
+        if (firstFeaturedIndex === -1) {
+          return 1;
+        }
+
+        if (secondFeaturedIndex === -1) {
+          return -1;
+        }
+
+        return firstFeaturedIndex - secondFeaturedIndex;
       }
 
       const firstScore =
@@ -111,18 +148,7 @@ async function fetchRepositories(signal) {
       return secondScore - firstScore;
     })
     .slice(0, MAX_REPOSITORIES)
-    .map((repository) => {
-      const id = `github-${repository.id}`;
-
-      return {
-        ...getStableGlobePosition(id),
-        id,
-        type: "github",
-        title: repository.name,
-        url: repository.html_url,
-        language: repository.language,
-      };
-    });
+    .map(toRepositoryItem);
 }
 
 async function fetchLinkedInPosts(signal) {
@@ -156,10 +182,9 @@ async function fetchLinkedInPosts(signal) {
     const id = post.id || url;
 
     postsById.set(id, {
-      ...getStableGlobePosition(id),
       ...post,
       id,
-      title: post.title || url,
+      title: post.title || (post.text ? "LinkedIn post" : url),
       url,
       type: "linkedin",
     });
@@ -181,6 +206,10 @@ function Pin({ item, visible, nearestItemRef, onHoverChange }) {
   const Icon = item.type === "github" ? GitHubIcon : LinkedInIcon;
   const itemType =
     item.type === "github" ? "GitHub repository" : "LinkedIn post";
+  const accessibleTitle =
+    item.type === "linkedin" && item.text
+      ? item.text.trim().slice(0, 160)
+      : item.title;
   const tooltipTitle = item.language
     ? `${item.title} · ${item.language}`
     : item.title;
@@ -206,7 +235,7 @@ function Pin({ item, visible, nearestItemRef, onHoverChange }) {
     <Html center distanceFactor={4} position={position}>
       <a
         ref={anchorRef}
-        aria-label={`Open ${itemType}: ${item.title}${item.language ? `, ${item.language}` : ""}`}
+        aria-label={`Open ${itemType}: ${accessibleTitle}${item.language ? `, ${item.language}` : ""}`}
         className={`globe-pin ${item.type} ${hovered ? "hovered" : ""}`}
         href={item.url}
         onBlur={() => handleHover(false)}
@@ -224,6 +253,7 @@ function Pin({ item, visible, nearestItemRef, onHoverChange }) {
         <Icon />
         <span className="pin-tooltip">
           <span className="pin-title">{item.title}</span>
+          {item.text && <span className="pin-preview">{item.text}</span>}
           {item.language && (
             <span className="pin-language">{item.language}</span>
           )}
@@ -336,7 +366,9 @@ function Globe({ items, filter, paused, reducedMotion, onHoverChange }) {
 }
 
 function App() {
-  const [repositories, setRepositories] = useState([]);
+  const [repositories, setRepositories] = useState(() =>
+    FEATURED_REPOSITORIES.map(toRepositoryItem),
+  );
   const [posts, setPosts] = useState([]);
   const [linkedinConfigured, setLinkedinConfigured] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -402,7 +434,10 @@ function App() {
     return () => preference.removeEventListener("change", updatePreference);
   }, []);
 
-  const items = [...repositories, ...posts];
+  const items = useMemo(
+    () => getEvenlySpacedPositions([...repositories, ...posts]),
+    [repositories, posts],
+  );
   const filters = [
     { id: "all", label: "All", count: items.length },
     { id: "github", label: "GitHub", count: repositories.length },
