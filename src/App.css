@@ -52,7 +52,7 @@ button:focus-visible {
 
 .globe-background {
   position: absolute;
-  z-index: 0;
+  z-index: 2;
   inset: 0 0 0 24%;
 }
 
@@ -63,7 +63,7 @@ button:focus-visible {
 .content,
 .footer {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
 }
 
 .availability {
@@ -327,17 +327,24 @@ h1 em {
 
 @media (max-width: 700px) {
   .globe-background {
-    inset: 0 0 0 8%;
-    opacity: 0.68;
+    inset: 0;
   }
 
   .app::before {
-    background: linear-gradient(90deg, #080d16f2, #080d16c9 47%, #080d1655);
+    background: linear-gradient(
+      180deg,
+      #080d16 0%,
+      #080d16f2 35%,
+      #080d16a6 65%,
+      #080d1640 100%
+    );
   }
 
   .content {
+    top: 7%;
     left: 7%;
-    width: min(440px, 76vw);
+    width: 86%;
+    transform: none;
   }
 
   h1 {
@@ -359,7 +366,7 @@ h1 em {
 
 @media (max-width: 380px) {
   .content {
-    width: 84vw;
+    width: 86%;
   }
 
   h1 {
@@ -382,7 +389,30 @@ h1 em {
   }
 }
 
-@media (max-height: 520px) {
+@media (max-width: 700px) and (max-height: 600px) {
+  .content {
+    top: 5%;
+  }
+
+  .eyebrow {
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-size: clamp(38px, 9vh, 54px);
+  }
+
+  .intro {
+    margin: 9px 0 12px;
+    line-height: 1.45;
+  }
+
+  .status {
+    min-height: 20px;
+  }
+}
+
+@media (min-width: 701px) and (max-height: 520px) {
   .content {
     top: 48%;
   }

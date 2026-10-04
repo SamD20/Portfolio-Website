@@ -20,9 +20,10 @@ function GitHubIcon() {
 function LinkedInIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="6.5" cy="6.5" r="2" fill="currentColor" />
       <path
         fill="currentColor"
-        d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.44-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.62 0 4.29 2.38 4.29 5.48v6.26ZM5.32 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM3.54 20.45H7.1V9H3.54v11.45ZM22.23 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.46c.98 0 1.77-.77 1.77-1.72V1.72C24 .77 23.21 0 22.23 0Z"
+        d="M4.75 10h3.5v10h-3.5zM10 10h3.35v1.37h.05c.47-.89 1.62-1.83 3.33-1.83 3.56 0 4.22 2.34 4.22 5.38V20h-3.5v-4.5c0-1.08-.02-2.48-1.51-2.48-1.51 0-1.74 1.18-1.74 2.4V20H10z"
       />
     </svg>
   );
@@ -135,7 +136,7 @@ async function fetchLinkedInPosts(signal) {
 
 function Pin({ item, visible, onHoverChange }) {
   const position = useMemo(
-    () => latLonToVector3(item.lat, item.lon, 1.015),
+    () => latLonToVector3(item.lat, item.lon, 1.04),
     [item.lat, item.lon],
   );
   const [hovered, setHovered] = useState(false);
@@ -152,7 +153,7 @@ function Pin({ item, visible, onHoverChange }) {
   }
 
   return (
-    <Html center distanceFactor={4} position={position} zIndexRange={[20, 0]}>
+    <Html center distanceFactor={4} position={position}>
       <a
         aria-label={`Open ${itemType}: ${item.title}${item.language ? `, ${item.language}` : ""}`}
         className={`globe-pin ${item.type} ${hovered ? "hovered" : ""}`}
