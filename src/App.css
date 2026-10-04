@@ -1,0 +1,415 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&display=swap");
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "DM Sans", sans-serif;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid #f3df9e;
+  outline-offset: 4px;
+}
+
+.app {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100svh;
+  min-height: 360px;
+  overflow: hidden;
+  color: #f4f3f0;
+  background: radial-gradient(
+    ellipse at 76% 50%,
+    #18263b,
+    #0c1422 43%,
+    #080d16 78%
+  );
+}
+
+.app::before {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    #080d16 0%,
+    #080d16ed 30%,
+    #080d1680 49%,
+    transparent 76%
+  );
+  content: "";
+  pointer-events: none;
+}
+
+.globe-background {
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 0 24%;
+}
+
+.globe-background canvas {
+  display: block;
+}
+
+.content,
+.footer {
+  position: absolute;
+  z-index: 2;
+}
+
+.availability {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #c4c9d3;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.availability i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #72d4a5;
+  box-shadow: 0 0 12px #72d4a5aa;
+}
+
+.content {
+  top: 50%;
+  left: 8%;
+  width: min(440px, 43vw);
+  transform: translateY(-50%);
+}
+
+.eyebrow {
+  margin: 0 0 16px;
+  color: #9ca8ba;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.eyebrow span {
+  padding: 0 5px;
+  color: #9386bd;
+}
+
+h1 {
+  margin: 0;
+  font: 400 clamp(48px, 6.2vw, 80px) / 0.96 "DM Serif Display", Georgia, serif;
+  letter-spacing: -0.04em;
+}
+
+h1 em {
+  color: #f3df9e;
+  font-weight: 400;
+}
+
+.intro {
+  max-width: 340px;
+  margin: 17px 0 21px;
+  color: #aeb7c5;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.filters {
+  display: flex;
+  gap: 5px;
+  width: max-content;
+  padding: 4px;
+  border: 1px solid #ffffff16;
+  border-radius: 10px;
+  background: #101927b8;
+  backdrop-filter: blur(12px);
+}
+
+.filters button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 7px;
+  color: #aeb7c5;
+  background: transparent;
+  cursor: pointer;
+  font-size: 11px;
+  transition:
+    color 0.2s,
+    background 0.2s;
+}
+
+.filters button:hover,
+.filters button.active {
+  color: #f7f5ff;
+  background: #ffffff16;
+}
+
+.filters button span {
+  color: #929db0;
+  font-size: 10px;
+}
+
+.status {
+  min-height: 32px;
+  margin: 6px 0 0;
+  color: #929db0;
+  font-size: 10px;
+}
+
+.globe-pin {
+  position: relative;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid #ffffffc9;
+  border-radius: 50%;
+  color: #fff;
+  box-shadow:
+    0 0 0 5px #ffffff15,
+    0 0 22px currentColor;
+  text-decoration: none;
+  transition:
+    transform 0.18s,
+    box-shadow 0.18s;
+}
+
+.globe-pin.github {
+  background: linear-gradient(145deg, #a78bfa, #7654d4);
+}
+
+.globe-pin.linkedin {
+  background: linear-gradient(145deg, #58a6ff, #176bb3);
+}
+
+.globe-pin svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.globe-pin > .pin-tooltip {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 11px);
+  display: grid;
+  gap: 3px;
+  width: max-content;
+  max-width: 230px;
+  overflow: hidden;
+  padding: 8px 10px;
+  transform: translate(-5px, -50%);
+  border: 1px solid #ffffff24;
+  border-radius: 7px;
+  opacity: 0;
+  color: #f4f3f0;
+  background: #101927f2;
+  box-shadow: 0 8px 24px #0005;
+  text-align: left;
+  pointer-events: none;
+  transition:
+    opacity 0.16s,
+    transform 0.16s;
+}
+
+.pin-title {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pin-language {
+  color: #b9a8f5;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.globe-pin:hover,
+.globe-pin.hovered,
+.globe-pin:focus-visible {
+  z-index: 3;
+  transform: scale(1.08);
+  box-shadow:
+    0 0 0 7px #ffffff20,
+    0 0 28px currentColor;
+}
+
+.globe-pin:hover > .pin-tooltip,
+.globe-pin.hovered > .pin-tooltip,
+.globe-pin:focus-visible > .pin-tooltip {
+  transform: translate(0, -50%);
+  opacity: 1;
+}
+
+.pin-accessibility {
+  position: absolute;
+  z-index: 4;
+  top: 14%;
+  right: 5%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  pointer-events: none;
+}
+
+.pin-accessibility a {
+  position: absolute;
+  width: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  color: #f4f3f0;
+  white-space: nowrap;
+}
+
+.pin-accessibility:focus-within a {
+  position: relative;
+  width: auto;
+  height: auto;
+  padding: 8px 11px;
+  border: 1px solid #ffffff20;
+  border-radius: 7px;
+  background: #101927f2;
+  font-size: 11px;
+  pointer-events: auto;
+}
+
+.pin-accessibility:focus-within a:focus-visible {
+  outline-color: #f3df9e;
+}
+
+.footer {
+  right: 7%;
+  bottom: 4%;
+  left: 8%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 22px;
+  color: #768294;
+  font-size: 10px;
+}
+
+.footer .availability {
+  margin-right: auto;
+}
+
+.footer a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #aeb7c5;
+  text-decoration: none;
+}
+
+.footer a:hover {
+  color: #f4f3f0;
+}
+
+.footer svg {
+  width: 12px;
+  height: 12px;
+}
+
+@media (max-width: 700px) {
+  .globe-background {
+    inset: 0 0 0 8%;
+    opacity: 0.68;
+  }
+
+  .app::before {
+    background: linear-gradient(90deg, #080d16f2, #080d16c9 47%, #080d1655);
+  }
+
+  .content {
+    left: 7%;
+    width: min(440px, 76vw);
+  }
+
+  h1 {
+    font-size: clamp(44px, 10vw, 64px);
+  }
+
+  .intro {
+    max-width: 310px;
+    font-size: 12px;
+  }
+
+  .footer {
+    right: 7%;
+    bottom: 20px;
+    left: 7%;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .content {
+    width: 84vw;
+  }
+
+  h1 {
+    font-size: 43px;
+  }
+
+  .filters {
+    gap: 2px;
+  }
+
+  .filters button {
+    gap: 5px;
+    padding: 7px;
+    font-size: 10px;
+  }
+
+  .footer {
+    gap: 10px;
+    font-size: 9px;
+  }
+}
+
+@media (max-height: 520px) {
+  .content {
+    top: 48%;
+  }
+
+  .eyebrow {
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-size: clamp(39px, 10vh, 54px);
+  }
+
+  .intro {
+    margin: 9px 0 12px;
+    line-height: 1.45;
+  }
+
+  .status {
+    min-height: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
