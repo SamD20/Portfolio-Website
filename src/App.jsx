@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Canvas } from "@react-three/fiber";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { Html, OrbitControls } from "@react-three/drei";
 import "./App.css";
 
@@ -134,11 +134,12 @@ async function fetchLinkedInPosts(signal) {
   };
 }
 
-function Pin({ item, visible, onHoverChange }) {
+function Pin({ item, visible, nearestItemRef, onHoverChange }) {
   const position = useMemo(
     () => latLonToVector3(item.lat, item.lon, 1.04),
     [item.lat, item.lon],
   );
+  const anchorRef = useRef(null);
   const [hovered, setHovered] = useState(false);
   const Icon = item.type === "github" ? GitHubIcon : LinkedInIcon;
   const itemType =
@@ -146,6 +147,18 @@ function Pin({ item, visible, onHoverChange }) {
   const tooltipTitle = item.language
     ? `${item.title} · ${item.language}`
     : item.title;
+
+  useFrame(() => {
+    const anchor = anchorRef.current;
+
+    if (anchor) {
+      const isNearest = nearestItemRef.current === item.id;
+
+      if (anchor.classList.contains("nearest") !== isNearest) {
+        anchor.classList.toggle("nearest", isNearest);
+      }
+    }
+  });
 
   function handleHover(isHovered) {
     setHovered(isHovered);
@@ -155,6 +168,7 @@ function Pin({ item, visible, onHoverChange }) {
   return (
     <Html center distanceFactor={4} position={position}>
       <a
+        ref={anchorRef}
         aria-label={`Open ${itemType}: ${item.title}${item.language ? `, ${item.language}` : ""}`}
         className={`globe-pin ${item.type} ${hovered ? "hovered" : ""}`}
         href={item.url}
@@ -182,13 +196,56 @@ function Pin({ item, visible, onHoverChange }) {
   );
 }
 
+function NearestPinTracker({ pinPositions, filter, nearestItemRef }) {
+  useFrame(({ camera }) => {
+    let nearestItemId = null;
+    let nearestDistance = Infinity;
+
+    pinPositions.forEach(({ id, position, type }) => {
+      if (filter !== "all" && filter !== type) {
+        return;
+      }
+
+      const dx = camera.position.x - position[0];
+      const dy = camera.position.y - position[1];
+      const dz = camera.position.z - position[2];
+      const distance = dx * dx + dy * dy + dz * dz;
+
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestItemId = id;
+      }
+    });
+
+    nearestItemRef.current = nearestItemId;
+  });
+
+  return null;
+}
+
 function Globe({ items, filter, paused, reducedMotion, onHoverChange }) {
+  const nearestItemRef = useRef(null);
+  const pinPositions = useMemo(
+    () =>
+      items.map((item) => ({
+        id: item.id,
+        position: latLonToVector3(item.lat, item.lon, 1.04),
+        type: item.type,
+      })),
+    [items],
+  );
+
   return (
     <Canvas
       aria-label="Interactive globe of GitHub repositories and LinkedIn posts"
       camera={{ position: [0, 0, 4.5], fov: 42 }}
       dpr={[1, 1.5]}
     >
+      <NearestPinTracker
+        filter={filter}
+        nearestItemRef={nearestItemRef}
+        pinPositions={pinPositions}
+      />
       <group>
         <mesh>
           <sphereGeometry args={[1, 48, 48]} />
@@ -222,6 +279,7 @@ function Globe({ items, filter, paused, reducedMotion, onHoverChange }) {
           <Pin
             key={item.id}
             item={item}
+            nearestItemRef={nearestItemRef}
             visible={filter === "all" || filter === item.type}
             onHoverChange={onHoverChange}
           />
