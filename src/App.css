@@ -456,3 +456,20 @@ h1 em {
     transition-duration: 0.01ms !important;
   }
 }
+
+.globe-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.globe-container canvas {
+  display: block;
+}
+
+.globe-html-portal {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}

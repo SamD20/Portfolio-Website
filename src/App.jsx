@@ -127,7 +127,13 @@ async function fetchLinkedInPosts(signal) {
   };
 }
 
-function Pin({ item, visible, nearestItemRef, onHoverChange }) {
+function Pin({
+  item,
+  visible,
+  nearestItemRef,
+  onHoverChange,
+  portal,
+}) {
   const position = useMemo(
     () => latLonToVector3(item.lat, item.lon, 1.04),
     [item.lat, item.lon],
@@ -168,7 +174,12 @@ function Pin({ item, visible, nearestItemRef, onHoverChange }) {
   }
 
   return (
-    <Html center distanceFactor={4} position={position}>
+<Html
+  center
+  distanceFactor={4}
+  position={position}
+  portal={portal}
+>
       <a
         ref={anchorRef}
         aria-label={`Open ${itemType}: ${accessibleTitle}${
@@ -249,6 +260,7 @@ function Globe({
   onHoverChange,
 }) {
   const nearestItemRef = useRef(null);
+  const htmlPortalRef = useRef(null);
 
   const pinPositions = useMemo(
     () =>
@@ -260,7 +272,8 @@ function Globe({
     [items],
   );
 
-  return (
+return (
+  <div className="globe-container">
     <Canvas
       aria-label="Interactive globe of GitHub repositories and LinkedIn posts"
       camera={{ position: [0, 0, 4.5], fov: 42 }}
@@ -275,7 +288,6 @@ function Globe({
       <group>
         <mesh>
           <sphereGeometry args={[1, 48, 48]} />
-
           <meshBasicMaterial
             color="#8295b6"
             wireframe
@@ -286,7 +298,6 @@ function Globe({
 
         <mesh>
           <sphereGeometry args={[0.985, 48, 48]} />
-
           <meshBasicMaterial
             color="#101a2b"
             transparent
@@ -296,24 +307,27 @@ function Globe({
 
         <mesh rotation={[Math.PI / 2.8, 0, 0]}>
           <torusGeometry args={[1.12, 0.002, 8, 120]} />
-
           <meshBasicMaterial
             color="#8295b6"
             transparent
             opacity={0.2}
           />
         </mesh>
-      </group>
 
-      {items.map((item) => (
-        <Pin
-          key={item.id}
-          item={item}
-          nearestItemRef={nearestItemRef}
-          visible={filter === "all" || filter === item.type}
-          onHoverChange={onHoverChange}
-        />
-      ))}
+        {items.map((item) => (
+          <Pin
+            key={item.id}
+            item={item}
+            nearestItemRef={nearestItemRef}
+            visible={
+              filter === "all" ||
+              filter === item.type
+            }
+            onHoverChange={onHoverChange}
+            portal={htmlPortalRef}
+          />
+        ))}
+      </group>
 
       <OrbitControls
         enablePan={false}
@@ -324,7 +338,14 @@ function Globe({
         maxDistance={6}
       />
     </Canvas>
-  );
+
+    {/* Stable target for every Drei Html */}
+    <div
+      ref={htmlPortalRef}
+      className="globe-html-portal"
+    />
+  </div>
+);
 }
 
 function App() {
