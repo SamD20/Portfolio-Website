@@ -6,26 +6,6 @@ import "./App.css";
 
 const MAX_REPOSITORIES = 6;
 const MAX_FEATURED_POSTS = 3;
-const FEATURED_REPOSITORY = {
-  id: 1400932729,
-  full_name: "SamD20/Portfolio-Website",
-  name: "Portfolio-Website",
-  html_url: "https://github.com/SamD20/Portfolio-Website",
-  language: "JavaScript",
-  fork: false,
-  stargazers_count: 0,
-  forks_count: 0,
-  watchers_count: 0,
-};
-const FEATURED_REPOSITORY_ITEM = {
-  lat: 0,
-  lon: -90,
-  id: `github-${FEATURED_REPOSITORY.id}`,
-  type: "github",
-  title: FEATURED_REPOSITORY.name,
-  url: FEATURED_REPOSITORY.html_url,
-  language: FEATURED_REPOSITORY.language,
-};
 
 const GITHUB_LOGO_PATH =
   "M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.1.78-.25.78-.55v-2.13c-3.2.7-3.88-1.35-3.88-1.35-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.77.11 3.06.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.4-5.26 5.69.41.36.78 1.06.78 2.14v3.18c0 .3.21.66.79.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z";
@@ -72,34 +52,15 @@ async function fetchRepositories(signal) {
   }
 
   const repositories = await response.json();
-  const featuredRepositoryIsIncluded = repositories.some(
-    (repository) => repository.full_name === FEATURED_REPOSITORY.full_name,
-  );
-
-  if (!featuredRepositoryIsIncluded) {
-    repositories.push(FEATURED_REPOSITORY);
-  }
 
   return repositories
-    .filter(
-      (repository) =>
-        !repository.fork ||
-        repository.full_name === FEATURED_REPOSITORY.full_name,
-    )
+    .filter((repository) => !repository.fork)
     .sort((first, second) => {
-      const firstIsFeatured =
-        first.full_name === FEATURED_REPOSITORY.full_name;
-      const secondIsFeatured =
-        second.full_name === FEATURED_REPOSITORY.full_name;
-
-      if (firstIsFeatured !== secondIsFeatured) {
-        return firstIsFeatured ? -1 : 1;
-      }
-
       const firstScore =
         first.stargazers_count * 3 +
         first.forks_count * 2 +
         first.watchers_count;
+
       const secondScore =
         second.stargazers_count * 3 +
         second.forks_count * 2 +
@@ -108,23 +69,22 @@ async function fetchRepositories(signal) {
       return secondScore - firstScore;
     })
     .slice(0, MAX_REPOSITORIES)
-    .map((repository) => {
-      const id = `github-${repository.id}`;
-
-      return {
-        id,
-        type: "github",
-        title: repository.name,
-        url: repository.html_url,
-        language: repository.language,
-      };
-    });
+    .map((repository) => ({
+      id: `github-${repository.id}`,
+      type: "github",
+      title: repository.name,
+      url: repository.html_url,
+      language: repository.language,
+    }));
 }
 
 async function fetchLinkedInPosts(signal) {
   const response = await fetch(
     `${import.meta.env.BASE_URL}linkedin-posts.json`,
-    { signal, cache: "no-cache" },
+    {
+      signal,
+      cache: "no-cache",
+    },
   );
 
   if (!response.ok) {
@@ -138,6 +98,7 @@ async function fetchLinkedInPosts(signal) {
   }
 
   const postsById = new Map();
+
   const featuredPosts = [
     ...feed.recent.slice(0, MAX_FEATURED_POSTS),
     ...feed.popular.slice(0, MAX_FEATURED_POSTS),
@@ -171,15 +132,20 @@ function Pin({ item, visible, nearestItemRef, onHoverChange }) {
     () => latLonToVector3(item.lat, item.lon, 1.04),
     [item.lat, item.lon],
   );
+
   const anchorRef = useRef(null);
   const [hovered, setHovered] = useState(false);
+
   const Icon = item.type === "github" ? GitHubIcon : LinkedInIcon;
+
   const itemType =
     item.type === "github" ? "GitHub repository" : "LinkedIn post";
+
   const accessibleTitle =
     item.type === "linkedin" && item.text
       ? item.text.trim().slice(0, 160)
       : item.title;
+
   const tooltipTitle = item.language
     ? `${item.title} · ${item.language}`
     : item.title;
@@ -205,7 +171,9 @@ function Pin({ item, visible, nearestItemRef, onHoverChange }) {
     <Html center distanceFactor={4} position={position}>
       <a
         ref={anchorRef}
-        aria-label={`Open ${itemType}: ${accessibleTitle}${item.language ? `, ${item.language}` : ""}`}
+        aria-label={`Open ${itemType}: ${accessibleTitle}${
+          item.language ? `, ${item.language}` : ""
+        }`}
         className={`globe-pin ${item.type} ${hovered ? "hovered" : ""}`}
         href={item.url}
         onBlur={() => handleHover(false)}
@@ -221,9 +189,14 @@ function Pin({ item, visible, nearestItemRef, onHoverChange }) {
         title={tooltipTitle}
       >
         <Icon />
+
         <span className="pin-tooltip">
           <span className="pin-title">{item.title}</span>
-          {item.text && <span className="pin-preview">{item.text}</span>}
+
+          {item.text && (
+            <span className="pin-preview">{item.text}</span>
+          )}
+
           {item.language && (
             <span className="pin-language">{item.language}</span>
           )}
@@ -233,7 +206,11 @@ function Pin({ item, visible, nearestItemRef, onHoverChange }) {
   );
 }
 
-function NearestPinTracker({ pinPositions, filter, nearestItemRef }) {
+function NearestPinTracker({
+  pinPositions,
+  filter,
+  nearestItemRef,
+}) {
   useFrame(({ camera }) => {
     let nearestItemId = null;
     let nearestDistance = Infinity;
@@ -246,7 +223,11 @@ function NearestPinTracker({ pinPositions, filter, nearestItemRef }) {
       const dx = camera.position.x - position[0];
       const dy = camera.position.y - position[1];
       const dz = camera.position.z - position[2];
-      const distance = dx * dx + dy * dy + dz * dz;
+
+      const distance =
+        dx * dx +
+        dy * dy +
+        dz * dz;
 
       if (distance < nearestDistance) {
         nearestDistance = distance;
@@ -260,8 +241,15 @@ function NearestPinTracker({ pinPositions, filter, nearestItemRef }) {
   return null;
 }
 
-function Globe({ items, filter, paused, reducedMotion, onHoverChange }) {
+function Globe({
+  items,
+  filter,
+  paused,
+  reducedMotion,
+  onHoverChange,
+}) {
   const nearestItemRef = useRef(null);
+
   const pinPositions = useMemo(
     () =>
       items.map((item) => ({
@@ -283,9 +271,11 @@ function Globe({ items, filter, paused, reducedMotion, onHoverChange }) {
         nearestItemRef={nearestItemRef}
         pinPositions={pinPositions}
       />
+
       <group>
         <mesh>
           <sphereGeometry args={[1, 48, 48]} />
+
           <meshBasicMaterial
             color="#8295b6"
             wireframe
@@ -296,6 +286,7 @@ function Globe({ items, filter, paused, reducedMotion, onHoverChange }) {
 
         <mesh>
           <sphereGeometry args={[0.985, 48, 48]} />
+
           <meshBasicMaterial
             color="#101a2b"
             transparent
@@ -305,23 +296,24 @@ function Globe({ items, filter, paused, reducedMotion, onHoverChange }) {
 
         <mesh rotation={[Math.PI / 2.8, 0, 0]}>
           <torusGeometry args={[1.12, 0.002, 8, 120]} />
+
           <meshBasicMaterial
             color="#8295b6"
             transparent
             opacity={0.2}
           />
         </mesh>
-
-        {items.map((item) => (
-          <Pin
-            key={item.id}
-            item={item}
-            nearestItemRef={nearestItemRef}
-            visible={filter === "all" || filter === item.type}
-            onHoverChange={onHoverChange}
-          />
-        ))}
       </group>
+
+      {items.map((item) => (
+        <Pin
+          key={item.id}
+          item={item}
+          nearestItemRef={nearestItemRef}
+          visible={filter === "all" || filter === item.type}
+          onHoverChange={onHoverChange}
+        />
+      ))}
 
       <OrbitControls
         enablePan={false}
@@ -343,6 +335,7 @@ function App() {
   const [errors, setErrors] = useState([]);
   const [filter, setFilter] = useState("all");
   const [pinHovered, setPinHovered] = useState(false);
+
   const [reducedMotion, setReducedMotion] = useState(() =>
     window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
@@ -350,45 +343,61 @@ function App() {
   useEffect(() => {
     const controller = new AbortController();
 
-    Promise.allSettled([
-      fetchRepositories(controller.signal),
-      fetchLinkedInPosts(controller.signal),
-    ])
-      .then(([githubResult, linkedinResult]) => {
-        if (controller.signal.aborted) {
-          return;
-        }
+    async function loadContent() {
+      const [githubResult, linkedinResult] =
+        await Promise.allSettled([
+          fetchRepositories(controller.signal),
+          fetchLinkedInPosts(controller.signal),
+        ]);
 
-        if (githubResult.status === "fulfilled") {
-          setRepositories(githubResult.value);
-        } else {
-          console.error(
-            "Unable to load GitHub repositories:",
-            githubResult.reason,
-          );
-          setRepositories([FEATURED_REPOSITORY_ITEM]);
-          setErrors((current) => [
-            ...current,
-            "GitHub repositories unavailable",
-          ]);
-        }
+      if (controller.signal.aborted) {
+        return;
+      }
 
-        if (linkedinResult.status === "fulfilled") {
-          setPosts(linkedinResult.value.posts);
-          setLinkedinConfigured(linkedinResult.value.configured);
-        } else {
-          console.error(
-            "Unable to load LinkedIn posts:",
-            linkedinResult.reason,
-          );
-          setErrors((current) => [...current, "LinkedIn posts unavailable"]);
-        }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      });
+      const nextRepositories =
+        githubResult.status === "fulfilled"
+          ? githubResult.value
+          : [];
+
+      const nextPosts =
+        linkedinResult.status === "fulfilled"
+          ? linkedinResult.value.posts
+          : [];
+
+      const nextErrors = [];
+
+      if (githubResult.status === "rejected") {
+        console.error(
+          "Unable to load GitHub repositories:",
+          githubResult.reason,
+        );
+
+        nextErrors.push("GitHub repositories unavailable");
+      }
+
+      if (linkedinResult.status === "rejected") {
+        console.error(
+          "Unable to load LinkedIn posts:",
+          linkedinResult.reason,
+        );
+
+        nextErrors.push("LinkedIn posts unavailable");
+      }
+      
+      setRepositories(nextRepositories);
+      setPosts(nextPosts);
+
+      setLinkedinConfigured(
+        linkedinResult.status === "fulfilled"
+          ? linkedinResult.value.configured
+          : false,
+      );
+
+      setErrors(nextErrors);
+      setLoading(false);
+    }
+
+    loadContent();
 
     return () => controller.abort();
   }, []);
@@ -397,21 +406,47 @@ function App() {
     const preference = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     );
-    const updatePreference = (event) => setReducedMotion(event.matches);
+
+    const updatePreference = (event) => {
+      setReducedMotion(event.matches);
+    };
 
     preference.addEventListener("change", updatePreference);
-    return () => preference.removeEventListener("change", updatePreference);
+
+    return () =>
+      preference.removeEventListener(
+        "change",
+        updatePreference,
+      );
   }, []);
 
   const items = useMemo(
-    () => getEvenlySpacedPositions([...repositories, ...posts]),
+    () =>
+      getEvenlySpacedPositions([
+        ...repositories,
+        ...posts,
+      ]),
     [repositories, posts],
   );
+
   const filters = [
-    { id: "all", label: "All", count: items.length },
-    { id: "github", label: "GitHub", count: repositories.length },
-    { id: "linkedin", label: "LinkedIn", count: posts.length },
+    {
+      id: "all",
+      label: "All",
+      count: items.length,
+    },
+    {
+      id: "github",
+      label: "GitHub",
+      count: repositories.length,
+    },
+    {
+      id: "linkedin",
+      label: "LinkedIn",
+      count: posts.length,
+    },
   ];
+
   const statusMessage = loading
     ? "Loading work…"
     : errors.length > 0
@@ -421,8 +456,11 @@ function App() {
             ? `${posts.length} LinkedIn posts`
             : "LinkedIn sync needs setup"
         }`;
+
   const visibleItems = items.filter(
-    (item) => filter === "all" || filter === item.type,
+    (item) =>
+      filter === "all" ||
+      item.type === filter,
   );
 
   return (
@@ -441,17 +479,23 @@ function App() {
         <p className="eyebrow">
           Software engineer <span>·</span> Bracknell, UK
         </p>
+
         <h1>
           A world of
           <br />
           <em>experience.</em>
         </h1>
+
         <p className="intro">
-          Hello, I'm Sam Derricott. Explore my current GitHub projects and
-          featured LinkedIn posts using this interactive globe.
+          Hello, I'm Sam Derricott. Explore my current GitHub
+          projects and featured LinkedIn posts using this
+          interactive globe.
         </p>
 
-        <div aria-label="Filter pins" className="filters">
+        <div
+          aria-label="Filter pins"
+          className="filters"
+        >
           {filters.map(({ id, label, count }) => (
             <button
               key={id}
@@ -466,20 +510,32 @@ function App() {
           ))}
         </div>
 
-        <p aria-live="polite" className="status">
+        <p
+          aria-live="polite"
+          className="status"
+        >
           {statusMessage}
         </p>
       </section>
 
       <footer className="footer">
-        <a className="availability" href="mailto:sam.derricott@gmail.com">
+        <a
+          className="availability"
+          href="mailto:sam.derricott@gmail.com"
+        >
           <i />
           Open to opportunities
         </a>
-        <a href="https://github.com/SamD20" rel="noreferrer" target="_blank">
+
+        <a
+          href="https://github.com/SamD20"
+          rel="noreferrer"
+          target="_blank"
+        >
           <GitHubIcon />
           GitHub
         </a>
+
         <a
           href="https://www.linkedin.com/in/samderricott/"
           rel="noreferrer"
@@ -490,7 +546,10 @@ function App() {
         </a>
       </footer>
 
-      <nav aria-label="Work links" className="pin-accessibility">
+      <nav
+        aria-label="Work links"
+        className="pin-accessibility"
+      >
         {visibleItems.map((item) => (
           <a
             key={item.id}
@@ -500,8 +559,10 @@ function App() {
             rel="noreferrer"
             target="_blank"
           >
-            {item.type === "github" ? "GitHub repository" : "LinkedIn post"}:{" "}
-            {item.title}
+            {item.type === "github"
+              ? "GitHub repository"
+              : "LinkedIn post"}
+            : {item.title}
           </a>
         ))}
       </nav>
